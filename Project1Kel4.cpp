@@ -1,7 +1,9 @@
+// kelompok 4: 123250021, 123250039, 123250032
+
 #include <iostream>
 #include <string>
-#include <iomanip>
 #include <fstream>
+#include <iomanip>
 
 using namespace std;
 
@@ -11,18 +13,26 @@ struct Pasien {
     string namaPasien;
 };
 
-const int MAX_DATA = 100;
+const int MAX_DATA = 10;
 Pasien daftarPasien[MAX_DATA];
 int jumlahData = 0;
 
 void tampil(Pasien daftarPasien[], int n);
+void searching();
+void sorting();
 void swapPasien(Pasien &a, Pasien &b);
 void bubbleSort(Pasien data[], int n);
 void selectionSort(Pasien data[], int n);
 void insertionSort(Pasien data[], int n);
-void tampilkanDaftarFile();
-void sorting();
-void mergingSambung();
+void shellSort(Pasien data[], int n);
+int partition(Pasien data[], int awal, int akhir);
+void quickSort(Pasien data[], int awal, int akhir);
+void merge(Pasien data[], int awal, int tengah, int akhir);
+void mergeSort(Pasien data[], int awal, int akhir);
+void operasifile();
+void mergesambung();
+void simpanlist(string filename);
+void tampillist();
 
 void swapPasien(Pasien &a, Pasien &b) {
     Pasien temp = a;
@@ -51,192 +61,644 @@ void selectionSort(Pasien data[], int n) {
         swapPasien(data[min_idx], data[k]);
     }
 }
-
+ 
 void insertionSort(Pasien data[], int n) {
     for (int k = 1; k < n; k++) {
         Pasien temp = data[k];
         int j = k - 1;
         while (j >= 0 && data[j].noRekamMedis > temp.noRekamMedis) {
             data[j + 1] = data[j];
-            j--;
+            j = j - 1;
         }
         data[j + 1] = temp;
     }
 }
 
-void tampilkanDaftarFile() {
-    cout << "Daftar file .txt di direktori:\n";
-    cout << "----------------------------------\n";
-    system("dir /b *.txt");
-    cout << "----------------------------------\n";
+void shellSort(Pasien data[], int n) {
+    for (int p = n / 2; p > 0; p = p / 2) {
+        for (int j = p; j < n; j++) {
+            Pasien temp = data[j];
+            int k;
+            for (k = j; k >= p && data[k - p].noRekamMedis > temp.noRekamMedis; k -= p) {
+                data[k] = data[k - p];
+            }
+            data[k] = temp;
+        }
+    }
+}
+
+int partition(Pasien data[], int awal, int akhir) {
+    int pivot = data[akhir].noRekamMedis;
+    int ip = awal;
+    for (int j = awal; j < akhir; j++) {
+        if (data[j].noRekamMedis <= pivot) {
+            swapPasien(data[j], data[ip]);
+            ip++;
+        }
+    }
+    swapPasien(data[akhir], data[ip]);
+    return ip;
+}
+
+void quickSort(Pasien data[], int awal, int akhir) {
+    if (awal < akhir) {
+        int ip = partition(data, awal, akhir);
+        quickSort(data, awal, ip - 1);
+        quickSort(data, ip + 1, akhir);
+    }
+}
+
+void merge(Pasien data[], int awal, int tengah, int akhir) {
+    int lenkiri = tengah - awal + 1;
+    int lenkanan = akhir - tengah;
+
+    Pasien* arrayKiri = new Pasien[lenkiri];
+    Pasien* arrayKanan = new Pasien[lenkanan];
+
+    for (int i = 0; i < lenkiri; i++) {
+        arrayKiri[i] = data[awal + i];
+    }
+    for (int j = 0; j < lenkanan; j++) {
+        arrayKanan[j] = data[tengah + 1 + j];
+    }
+
+    int i, j, k;
+    i = 0;
+    j = 0;
+    k = awal;
+
+    while(i < lenkiri && j < lenkanan){
+        if (arrayKiri[i].noRekamMedis <= arrayKanan[j].noRekamMedis){
+            data[k] = arrayKiri[i];
+            i++;
+        } else {
+            data[k] = arrayKanan[j];
+            j++;
+        }
+        k++;
+    }
+
+    while (i < lenkiri) {
+        data[k] = arrayKiri[i];
+        i++;
+        k++;
+    }
+    while (j < lenkanan) {
+        data[k] = arrayKanan[j];
+        j++;
+        k++;
+    }
+}
+
+void mergeSort(Pasien data[], int awal, int akhir) {
+    if (awal >= akhir) {
+        return;
+    }
+    int tengah = awal + (akhir - awal)/2;
+    mergeSort(data, awal, tengah);
+    mergeSort(data, tengah + 1, akhir);
+    merge(data, awal, tengah, akhir);
 }
 
 void tampil(Pasien daftarPasien[], int n) {
-    if (n == 0) {
-        cout << "Data Kosong!\n";
-    } else {
-        cout << setw(10) << left << "NO RM" << setw(20) << left << "Nama RS" << "Nama Pasien" << endl;
-        cout << "------------------------------------------------------------\n";
         for (int i = 0; i < n; i++) {
-            cout << setw(10) << left << daftarPasien[i].noRekamMedis 
-                 << setw(20) << left << daftarPasien[i].namaRS 
-                 << daftarPasien[i].namaPasien << endl;
+            cout << setw(10) << left << daftarPasien[i].noRekamMedis << setw(15) << left << daftarPasien[i].namaRS << daftarPasien[i].namaPasien;
+            cout << endl;
         }
-    }
 }
 
 void sorting() {
-    string fileSumber, fileHasil;
-    tampilkanDaftarFile();
-    cout << "Pilih file sumber: "; 
-    cin >> fileSumber;
-    
-    ifstream inFile(fileSumber);
-    if (!inFile) {
-        cout << "File tidak ditemukan!\n";
-    } else {
-        int n = 0;
-        while (inFile >> daftarPasien[n].noRekamMedis) {
-            inFile.ignore();
-            getline(inFile, daftarPasien[n].namaRS, '|');
-            getline(inFile, daftarPasien[n].namaPasien);
-            n++;
-        }
-        inFile.close();
+    string filesumber, filehasil;
+    int pilihan;
+    char ulang = 'y';
+    char simpan = 'y';
+    do {
+        system("cls");
+        cout << "\nSORTING MENU\n";
+        cout << "==================================\n";
+        cout << "1. Bubble Sort\n";
+        cout << "2. Selection Sort\n";
+        cout << "3. Insertion Sort\n";
+        cout << "4. Quick Sort\n";
+        cout << "5. Shell Sort\n";
+        cout << "6. Merge Sort\n";
+        cout << "7. Kembali Ke Menu\n";
+        cout << "==================================\n";
+        cout << "Opsi(1-7): "; cin >> pilihan;
 
-        if (n == 0) {
-            cout << "File kosong!\n";
+        int jml = 0;
+        if (pilihan == 1) {
+            tampillist();
+            cout << "\nSorting data dari FILE : "; cin >> filesumber;
+
+            ifstream infile(filesumber);
+            if (!infile.is_open()){
+                cout << "Error!!!\n";
+            } else {
+                while (infile >> daftarPasien[jml].noRekamMedis) {
+                    infile.ignore();
+                    getline(infile, daftarPasien[jml].namaRS, '|');
+                    getline(infile, daftarPasien[jml].namaPasien);
+                    jml++;
+                }
+                infile.close();
+                cout << "\nData Sebelum Diurutkan\n";
+                cout << "==================================\n";
+                cout << setw(10) << left << "NO" << setw(15) << left << "Nama RS" << "Pasien\n";
+                cout << "==================================\n";
+                tampil(daftarPasien, jml);
+                cout << "==================================\n\n";
+                bubbleSort(daftarPasien, jml);
+                cout << "\nData Urut by No Rekam Medis (Bubble Sort)\n";
+                cout << "==================================\n";
+                cout << setw(10) << left << "NO" << setw(15) << left << "Nama RS" << "Pasien\n";
+                cout << "==================================\n";
+                tampil(daftarPasien, jml);
+                cout << "==================================\n";
+            }
+            cout << "\nSimpan Data Hasil Sorting(y/t)? "; cin >> simpan;
+        } else if (pilihan == 2) {
+            tampillist();
+            cout << "\nSorting data dari FILE : "; cin >> filesumber;
+
+            ifstream infile(filesumber);
+            if (!infile.is_open()){
+                cout << "Error!!!\n";
+            } else {
+                while (infile >> daftarPasien[jml].noRekamMedis) {
+                    infile.ignore();
+                    getline(infile, daftarPasien[jml].namaRS, '|');
+                    getline(infile, daftarPasien[jml].namaPasien);
+                    jml++;
+                }
+                infile.close();    
+                cout << "\nData Sebelum Diurutkan\n";
+                cout << "==================================\n";
+                cout << setw(10) << left << "NO" << setw(15) << left << "Nama RS" << "Pasien\n";
+                cout << "==================================\n\n";
+                tampil(daftarPasien, jml);
+                cout << "==================================\n";
+                selectionSort(daftarPasien, jml);
+                cout << "\nData Urut by NO Rekam Medis (Selection Sort)\n";
+                cout << "==================================\n";
+                cout << setw(10) << left << "NO" << setw(15) << left << "Nama RS" << "Pasien\n";
+                cout << "==================================\n";
+                tampil(daftarPasien, jml);
+                cout << "==================================\n";
+            }
+            cout << "\nSimpan Data Hasil Sorting(y/t)? "; cin >> simpan;
+        } else if (pilihan == 3) {
+            tampillist();
+            cout << "\nSorting data dari FILE : "; cin >> filesumber;
+
+            ifstream infile(filesumber);
+            if (!infile.is_open()){
+                cout << "Error!!!\n";
+            } else {
+                while (infile >> daftarPasien[jml].noRekamMedis) {
+                    infile.ignore();
+                    getline(infile, daftarPasien[jml].namaRS, '|');
+                    getline(infile, daftarPasien[jml].namaPasien);
+                    jml++;
+                }
+                cout << "\nData Sebelum Diurutkan\n";
+                cout << "==================================\n";
+                cout << setw(10) << left << "NO" << setw(15) << left << "Nama RS" << "Pasien\n";
+                cout << "==================================\n\n";
+                tampil(daftarPasien, jml);
+                cout << "==================================\n";
+                insertionSort(daftarPasien, jml);
+                cout << "\nData Urut by No Rekam Medis (Insertion Sort)\n";
+                cout << "==================================\n";
+                cout << setw(10) << left << "NO" << setw(15) << left << "Nama RS" << "Pasien\n";
+                cout << "==================================\n";
+                tampil(daftarPasien, jml);
+                cout << "==================================\n";
+            }
+            cout << "\nSimpan Data Hasil Sorting(y/t)? "; cin >> simpan;
+        } else if (pilihan == 4) {
+            tampillist();
+            cout << "\nSorting data dari FILE : "; cin >> filesumber;
+
+            ifstream infile(filesumber);
+            if (!infile.is_open()){
+                cout << "Error!!!\n";
+            } else {
+                while (infile >> daftarPasien[jml].noRekamMedis) {
+                    infile.ignore();
+                    getline(infile, daftarPasien[jml].namaRS, '|');
+                    getline(infile, daftarPasien[jml].namaPasien);
+                    jml++;
+                }
+                cout << "\nData Sebelum Diurutkan\n";
+                cout << "==================================\n";
+                cout << setw(10) << left << "NO" << setw(15) << left << "Nama RS" << "Pasien\n";
+                cout << "==================================\n\n";
+                tampil(daftarPasien, jml);
+                cout << "==================================\n";
+                quickSort(daftarPasien, 0, jml - 1);
+                cout << "\nData Urut by No Rekam Medis (Quick Sort)\n";
+                cout << "==================================\n";
+                cout << setw(10) << left << "NO" << setw(15) << left << "Nama RS" << "Pasien\n";
+                cout << "==================================\n";
+                tampil(daftarPasien, jml);
+                cout << "==================================\n";
+            }
+            cout << "\nSimpan Data Hasil Sorting(y/t)? "; cin >> simpan;
+        } else if (pilihan == 5) {
+            tampillist();
+            cout << "\nSorting data dari FILE : "; cin >> filesumber;
+
+            ifstream infile(filesumber);
+            if (!infile.is_open()){
+                cout << "Error!!!\n";
+            } else {
+                while (infile >> daftarPasien[jml].noRekamMedis) {
+                    infile.ignore();
+                    getline(infile, daftarPasien[jml].namaRS, '|');
+                    getline(infile, daftarPasien[jml].namaPasien);
+                    jml++;
+                }
+                cout << "\nData Sebelum Diurutkan\n";
+                cout << "==================================\n";
+                cout << setw(10) << left << "NO" << setw(15) << left << "Nama RS" << "Pasien\n";
+                cout << "==================================\n\n";
+                tampil(daftarPasien, jml);
+                cout << "==================================\n";
+                shellSort(daftarPasien, jml);
+                cout << "\nData Urut by No Rekam Medis (Shell Sort)\n";
+                cout << "==================================\n";
+                cout << setw(10) << left << "NO" << setw(15) << left << "Nama RS" << "Pasien\n";
+                cout << "==================================\n";
+                tampil(daftarPasien, jml);
+                cout << "==================================\n";
+            }
+            cout << "\nSimpan Data Hasil Sorting(y/t)? "; cin >> simpan;
+        } else if (pilihan == 6) {
+            tampillist();
+            cout << "\nSorting data dari FILE : "; cin >> filesumber;
+
+            ifstream infile(filesumber);
+            if (!infile.is_open()){
+                cout << "Error!!!\n";
+            } else {
+                while (infile >> daftarPasien[jml].noRekamMedis) {
+                    infile.ignore();
+                    getline(infile, daftarPasien[jml].namaRS, '|');
+                    getline(infile, daftarPasien[jml].namaPasien);
+                    jml++;
+                }
+                cout << "\nData Sebelum Diurutkan\n";
+                cout << "==================================\n";
+                cout << setw(10) << left << "NO" << setw(15) << left << "Nama RS" << "Pasien\n";
+                cout << "==================================\n\n";
+                tampil(daftarPasien, jml);
+                cout << "==================================\n";
+                mergeSort(daftarPasien, 0, jml - 1);
+                cout << "\nData Urut by No Rekam Medis (Merge Sort)\n";
+                cout << "==================================\n";
+                cout << setw(10) << left << "NO" << setw(15) << left << "Nama RS" << "Pasien\n";
+                cout << "==================================\n";
+                tampil(daftarPasien, jml);
+                cout << "==================================\n";
+            }
+            cout << "\nSimpan Data Hasil Sorting(y/t)? "; cin >> simpan;
+        } else if (pilihan == 7) {
+            return;
         } else {
-            int opsi;
-            cout << "\nPilih Algoritma:\n1. Bubble Sort\n2. Selection Sort\n3. Insertion Sort\nOpsi: "; 
-            cin >> opsi;
-            
-            if (opsi == 1) {
-                bubbleSort(daftarPasien, n);
-            } else if (opsi == 2) {
-                selectionSort(daftarPasien, n);
-            } else if (opsi == 3) {
-                insertionSort(daftarPasien, n);
-            }
-
-            cout << "Masukkan nama file baru untuk hasil: "; 
-            cin >> fileHasil;
-
-            ofstream outFile(fileHasil);
-            for (int i = 0; i < n; i++) {
-                outFile << daftarPasien[i].noRekamMedis << "|" << daftarPasien[i].namaRS << "|" << daftarPasien[i].namaPasien << endl;
-            }
-            outFile.close();
-            cout << "Data berhasil disimpan ke file baru: " << fileHasil << endl;
+            cout << "\nPilihan tidak valid!\n";
+            return;
         }
+        if (simpan == 'y' || simpan == 'Y') {
+            cout << "Simpan di FILE : "; cin >> filehasil;
+            simpanlist(filehasil);
+            ofstream outfile(filehasil);
+            if (outfile.is_open()) {
+                for (int n = 0; n < jml; n++){
+                    outfile << daftarPasien[n].noRekamMedis << "|" << daftarPasien[n].namaRS << "|" << daftarPasien[n].namaPasien << endl;
+                }
+                outfile.close();
+            } else {
+                cout << "Error!!!\n";
+            }
+        }
+        cout << "\nUlang(y/t)? : "; cin >> ulang;
+    } while (ulang == 'y' || ulang == 'Y');    
+}
+
+void searching() {
+    string filename;
+    int pilihan, cari;
+    char ulang = 'y';
+    
+    do {
+        system("cls");
+        cout << "SEARCHING\n";
+        cout << "================================\n";
+        cout << "1. Sequential Search\n";
+        cout << "2. Binary\n";
+        cout << "3. Kembali ke Menu Utama\n";
+        cout << "==================================\n";
+        cout << "Opsi: "; cin >> pilihan;
+        system("cls");
+        tampillist();
+        int n = 0;
+        bool ditemukan = false;
+        if (pilihan == 1) {
+            cout << "\nSequential Search\n";
+            cout << "==================================\n";
+            cout << "Cari Data dari FILE : "; cin >> filename;
+            ifstream infile(filename);
+            if (!infile.is_open()){
+                cout << "Error!!\n";
+            } else {
+                
+                while (infile >> daftarPasien[n].noRekamMedis){
+                    infile.ignore();
+                    getline(infile, daftarPasien[n].namaRS, '|');
+                    getline(infile, daftarPasien[n].namaPasien);
+                    n++;
+                }
+                infile.close();
+                cout << "Masukkan No Rekam Medis yang dicari: "; cin >> cari;
+                for (int i = 0; i < n; i++) {
+                    if (daftarPasien[i].noRekamMedis == cari) {
+                        ditemukan = true; 
+                        cout << "\nData ditemukan\n";
+                        cout << "==================================\n";
+                        cout << "No Rekam Medis     : " << daftarPasien[i].noRekamMedis << endl;
+                        cout << "Nama Rumah Sakit   : " << daftarPasien[i].namaRS << endl;
+                        cout << "Nama Pasien        : " << daftarPasien[i].namaPasien << endl;
+                        cout << "==================================\n";
+                        break;
+                    } 
+                }
+                if(!ditemukan) {
+                    cout << "\nData Tidak Ditemukan\n";
+                }
+            }
+        } else if (pilihan == 2) {
+            cout << "\nBinary\n";
+            cout << "==================================\n";
+            cout << "Cari Data dari FILE : "; cin >> filename;
+            ifstream infile(filename);
+            if (!infile.is_open()){
+                cout << "Error!!!\n";
+            } else {
+                while (infile >> daftarPasien[n].noRekamMedis){
+                    infile.ignore();
+                    getline(infile, daftarPasien[n].namaRS, '|');
+                    getline(infile, daftarPasien[n].namaPasien);
+                    n++;
+                }
+                cout << "Masukkan No Rekam Medis yang dicari: "; cin >> cari;
+                quickSort(daftarPasien, 0, n - 1);
+                int low = 0, high = n - 1;
+                while (low <= high) {
+                    int mid = low + (high - low) / 2;
+                    if (daftarPasien[mid].noRekamMedis == cari) {
+                        cout << "\nData ditemukan\n";
+                        cout << "=================================\n";
+                        cout << "No Rekam Medis     : " << daftarPasien[mid].noRekamMedis << endl;
+                        cout << "Nama Rumah Sakit   : " << daftarPasien[mid].namaRS << endl;
+                        cout << "Nama Pasien        : " << daftarPasien[mid].namaPasien << endl;
+                        cout << "=================================\n";
+                        ditemukan = true; 
+                        break;
+                    } else if (daftarPasien[mid].noRekamMedis < cari) {
+                        low = mid + 1;
+                    } else {
+                        high = mid - 1;
+                    }
+                }
+                if (!ditemukan) {
+                    cout << "\nData Tidak Ditemukan\n";
+                }
+            }
+        } else if (pilihan == 3) {
+            return;
+        } else {
+            cout << "\nPilihan Tidak Tersedia\n";
+        }
+        cout << "\nUlang(y/t)? "; cin >> ulang;
+    } while (ulang == 'y' || ulang == 'Y');
+}
+
+void operasifile() {
+    int operasi;
+    char ulang = 'y';
+
+    do{
+        system("cls");
+        cout << "OPERASI FILE\n";
+        cout << "==================================\n";
+        cout << "1. MERGING SAMBUNG\n";
+        cout << "2. Kembali ke Menu Utama\n";
+        cout << "==================================\n";
+        cout << "Opsi : "; cin >> operasi;
+        cout << "\n";
+        tampillist();
+
+        if (operasi == 1) {
+            mergesambung();
+        } else if (operasi == 2) {
+            return;
+        } else {
+            cout << "\nPilihan Tidak valid\n";
+        }
+        cout << "\nUlang(y/t)? "; cin >> ulang;
+    } while (ulang == 'y' || ulang == 'Y');
+}
+
+void mergesambung() {
+    string result;
+    const int maxfile = 4;
+    int jmlfile = 0;
+    string filedipilih[maxfile];
+    string baris;
+
+    cout << "\nMERGING SAMBUNG\n";
+    cout << "==================================\n";
+    cout << "Jumlah FILE yang ingin dioperasikan (max 4): "; cin >> jmlfile;
+    if (jmlfile < 1) {
+        cout << "FILE minimal 1\n";
+    } else if (jmlfile > 4) {
+        cout << "FILE maksimal 4\n";
+    } else {
+        for (int i = 0; i < jmlfile; i++){
+            cout << "Nama File ke-" << i + 1 << ": "; cin >> filedipilih[i];
+        }
+        cout << "Simpan Hasil merge di FILE : "; cin >> result;
+        simpanlist(result);
+        for (int j = 0; j < jmlfile; j++ ) {
+            ifstream infile(filedipilih[j]);
+            if (!infile.is_open()){
+                cout << "ERROR\n";
+            } else {
+                int n = 0;
+                cout << "==================================\n";
+                cout << setw(10) << left << "NO" << setw(15) << left << "Nama RS" << "Pasien\n";
+                cout << "==================================\n";
+                while (infile >> daftarPasien[n].noRekamMedis) {
+                    infile.ignore();
+                    getline(infile, daftarPasien[n].namaRS, '|');
+                    getline(infile, daftarPasien[n].namaPasien);
+                    n++;
+                }
+                tampil(daftarPasien, n);
+                cout << "\n";
+                infile.close();
+            }
+        }
+        ofstream outfile(result);
+        for (int k = 0; k < jmlfile; k++) {
+            ifstream infile(filedipilih[k]);
+            if (!infile.is_open()) {
+                cout << "ERROR\n";
+            } else {
+                while (getline(infile, baris)) {
+                    outfile << baris << endl;
+                }
+                infile.close();
+            }
+        }
+        outfile.close();
+
+        int m = 0;
+        ifstream infile(result);
+        cout << "==================================\n";
+        cout << setw(10) << left << "NO" << setw(15) << left << "Nama RS" << "Pasien\n";
+        cout << "==================================\n";
+        while (infile >> daftarPasien[m].noRekamMedis) {
+            infile.ignore();
+            getline(infile, daftarPasien[m].namaRS, '|');
+            getline(infile, daftarPasien[m].namaPasien);
+            m++;
+        }
+        tampil(daftarPasien, m);
+        cout << "==================================\n";
+        infile.close();
     }
 }
 
-void mergingSambung() {
-    string fileHasil, fileInput;
-    int jml;
-    system("cls");
-    cout << "MERGING SAMBUNG\n";
-    tampilkanDaftarFile();
-    
-    cout << "Nama file baru hasil gabungan: "; 
-    cin >> fileHasil;
-    cout << "Jumlah file yang akan digabung (Max 4): "; 
-    cin >> jml;
-    
-    if (jml > 4) {
-        jml = 4;
+void simpanlist(string filename) {
+    ofstream listfile("daftarfile.txt", ios::app);
+    if (listfile.is_open()) {
+        listfile << filename << endl;
+    } else {
+        cout << "ERROR\n";
     }
-    
-    ofstream outFile(fileHasil);
-    for(int i = 0; i < jml; i++) {
-        cout << "Masukkan nama file ke-" << i+1 << ": "; 
-        cin >> fileInput;
-        ifstream inFile(fileInput);
-        if (!inFile) {
-            cout << "File tidak ada!\n";
-        } else {
-            string baris;
-            while(getline(inFile, baris)) {
-                outFile << baris << endl;
-            }
-            inFile.close();
+    listfile.close();
+}
+
+void tampillist() {
+    ifstream listfile("daftarfile.txt");
+    cout << "LIST FILE\n";
+    cout << "==================================\n";
+    if (!listfile.is_open()) {
+        cout << "Belum ada File\n";
+    } else {
+        string filename;
+        while (getline(listfile, filename)) {
+            cout << filename << endl;
         }
     }
-    outFile.close();
-    cout << "Merge Selesai!\n";
+    listfile.close();
 }
 
 int main() {
+    string namafile;
     int pilihan;
     char lanjut = 'y';
     do {
         system("cls");
-        cout << "SISTEM INFORMASI PASIEN (0708)\n";
+        cout << "MENU :\n";
         cout << "==================================\n";
-        cout << "1. INPUT DATA KE FILE BARU\n";
-        cout << "2. TAMPIL DATA DARI FILE\n";
-        cout << "3. SORTING KE FILE BARU\n";
-        cout << "4. MERGING SAMBUNG\n";
-        cout << "5. EXIT\n";
+        cout << "1. INPUT DATA\n";
+        cout << "2. TAMPIL DATA\n";
+        cout << "3. SEARCHING\n";
+        cout << "4. SORTING\n";
+        cout << "5. OPERASI FILE\n";
+        cout << "6. EXIT\n";
         cout << "==================================\n";
-        cout << "Pilih : "; 
+        cout << "Pilih : ";
         cin >> pilihan;
+        system("cls");
 
-        if (pilihan == 1) {
-            string fn;
-            cout << "Nama file: "; 
-            cin >> fn;
-            ofstream out(fn);
-            cout << "Jumlah data: "; 
-            cin >> jumlahData;
-            for (int i = 0; i < jumlahData; i++) {
-                cout << "Data ke-" << i+1 << endl;
-                cout << "No RM: "; 
-                cin >> daftarPasien[i].noRekamMedis; 
-                cin.ignore();
-                cout << "RS   : "; 
-                getline(cin, daftarPasien[i].namaRS);
-                cout << "Nama : "; 
-                getline(cin, daftarPasien[i].namaPasien);
-                out << daftarPasien[i].noRekamMedis << "|" << daftarPasien[i].namaRS << "|" << daftarPasien[i].namaPasien << endl;
-            }
-            out.close();
-        } else if (pilihan == 2) {
-            string fn;
-            tampilkanDaftarFile();
-            cout << "Pilih file: "; 
-            cin >> fn;
-            ifstream in(fn);
-            if (!in) {
-                cout << "Gagal buka file!\n";
-            } else {
-                int n = 0;
-                while (in >> daftarPasien[n].noRekamMedis) {
-                    in.ignore();
-                    getline(in, daftarPasien[n].namaRS, '|');
-                    getline(in, daftarPasien[n].namaPasien);
-                    n++;
+        switch(pilihan) {
+            case 1:
+                tampillist();
+                cout << "\nINPUT DATA\n";
+                cout << "==================================\n";
+                cout << "Disimpan di file : "; cin >> namafile;
+                cout << "Jumlah Data (MAX 10): "; cin >> jumlahData;
+                cout << "==================================\n";
+                simpanlist(namafile);
+                if (jumlahData == 0) {
+                    cout << "Jumlah Data Minimal 1\n";
+                } else if (jumlahData > 10) {
+                    cout << "Jumlah Data Maksimal 10\n";
+                } else {
+                    ofstream outfile(namafile);
+                    if (outfile.is_open()){
+                        for (int i = 0; i < jumlahData; i++) {
+                            cout << "Data ke-" << i+1 << "\n";
+                            cout << "   No Rekam Medis      : "; cin >> daftarPasien[i].noRekamMedis; cin.ignore();
+                            cout << "   Nama Rumah Sakit    : "; getline(cin, daftarPasien[i].namaRS);
+                            cout << "   Nama Pasien         : "; getline(cin, daftarPasien[i].namaPasien);
+                            outfile << daftarPasien[i].noRekamMedis << "|" << daftarPasien[i].namaRS << "|" << daftarPasien[i].namaPasien << endl;
+                        }
+                        outfile.close();
+                    } else {
+                        cout << "FILE Gagal!\n";
+                    }
+                    
                 }
-                tampil(daftarPasien, n);
-                in.close();
+                break;
+            case 2: {
+                int n = 0;
+                tampillist();
+                cout << "\nNama FILE : "; cin >> namafile;
+                ifstream infile(namafile);
+                if (!infile.is_open()) {
+                    cout << "\nFILE gagal dibuka\n";
+                } else { 
+                    cout << "\nTAMPIL DATA\n";
+                    cout << "==================================\n";
+                    cout << setw(10) << left << "NO" << setw(15) << left << "Nama RS" << "Pasien\n";
+                    cout << "==================================\n";
+                    while (infile >> daftarPasien[n].noRekamMedis){
+                        infile.ignore();
+                        getline(infile, daftarPasien[n].namaRS, '|');
+                        getline(infile, daftarPasien[n].namaPasien);
+                        n++;
+                    }
+                    tampil(daftarPasien, n);
+                    infile.close();
+                }
+                break;
             }
-        } else if (pilihan == 3) {
-            sorting();
-        } else if (pilihan == 4) {
-            mergingSambung();
-        } else if (pilihan == 5) {
-            lanjut = 't';
-        } else {
-            cout << "Menu tidak ada!\n";
+            case 3:
+                searching();
+                break;
+            case 4:
+                    sorting();
+                break;
+            case 5:
+                operasifile();
+                break;
+            case 6:
+                lanjut = 't';
+                break;
+            default:
+                cout << "\nPilihan Menu Tidak Tersedia\n";
+                break;
         }
-
-        if (pilihan != 5) {
-            cout << "\nKembali ke Menu Utama(y/t)? "; 
-            cin >> lanjut;
+        if (pilihan != 6) {
+            cout << "==================================\n";
+            cout << "\nKembali ke Menu Utama(y/t)? "; cin >> lanjut;
         }
     } while (lanjut == 'y' || lanjut == 'Y');
-    
     system("cls");
     cout << "Program dihentikan\n";
     return 0;
