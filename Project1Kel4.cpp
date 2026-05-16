@@ -682,7 +682,7 @@ int main() {
                 searching();
                 break;
             case 4:
-                    sorting();
+                sorting();
                 break;
             case 5:
                 operasifile();
