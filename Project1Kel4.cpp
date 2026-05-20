@@ -451,6 +451,7 @@ void searching() {
                     getline(infile, daftarPasien[n].namaPasien);
                     n++;
                 }
+                infile.close();
                 cout << "Masukkan No Rekam Medis yang dicari: "; cin >> cari;
                 quickSort(daftarPasien, 0, n - 1);
                 int low = 0, high = n - 1;
