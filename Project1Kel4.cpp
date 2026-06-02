@@ -400,11 +400,10 @@ void searching() {
         cout << "3. Kembali ke Menu Utama\n";
         cout << "==================================\n";
         cout << "Opsi: "; cin >> pilihan;
-        system("cls");
-        tampillist();
         int n = 0;
         bool ditemukan = false;
         if (pilihan == 1) {
+            tampillist();
             cout << "\nSequential Search\n";
             cout << "==================================\n";
             cout << "Cari Data dari FILE : "; cin >> filename;
@@ -438,6 +437,7 @@ void searching() {
                 }
             }
         } else if (pilihan == 2) {
+            tampillist();
             cout << "\nBinary\n";
             cout << "==================================\n";
             cout << "Cari Data dari FILE : "; cin >> filename;
