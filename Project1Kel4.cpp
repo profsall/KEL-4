@@ -456,8 +456,6 @@ void mergesambung() {
                 namaValid = true;
             }
         } while (!namaValid);
-
-        simpanlist(result);
         
         for (int j = 0; j < jmlfile; j++ ) {
             ifstream infile(filedipilih[j]);
@@ -500,6 +498,8 @@ void mergesambung() {
         tampil(daftarPasien, m);
         cout<<"==================================\n";
         infile.close();
+
+        simpanlist(result);
     }
 }
 
